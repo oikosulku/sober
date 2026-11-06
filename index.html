@@ -1,0 +1,892 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f9f9f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0d0d0d" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Dry Days">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<title>Dry Days</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #f9f9f7;
+  --surface: #fcfcfb;
+  --ink: #0b0b0b;
+  --ink2: #52514e;
+  --muted: #898781;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --ring: rgba(11, 11, 11, .10);
+  --accent: #2a78d6;
+  --c-dry: #2f9e44;
+  --c-low: #fcc419;
+  --c-mid: #f76707;
+  --c-high: #c92a2a;
+  --c-black: #262626;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d0d0d;
+    --surface: #1a1a19;
+    --ink: #f0efec;
+    --ink2: #c3c2b7;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --ring: rgba(255, 255, 255, .10);
+    --accent: #3987e5;
+    --c-black: #6b6b66;
+  }
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: default; }
+h1, h2, h3, p { margin: 0; }
+#app {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: calc(env(safe-area-inset-top) + 14px) 16px calc(88px + env(safe-area-inset-bottom));
+}
+#view { display: flex; flex-direction: column; gap: 14px; }
+.card {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 0 0 1px var(--ring);
+}
+.card h2 { font-size: 15px; font-weight: 650; margin-bottom: 2px; }
+.sub { font-size: 13px; color: var(--ink2); }
+.eyebrow { font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.link { background: none; border: 0; padding: 6px 2px; color: var(--accent); font-size: 14px; font-weight: 600; }
+
+/* category colours */
+.k-dry   { --fill: var(--c-dry);   --on: #0b0b0b; }
+.k-low   { --fill: var(--c-low);   --on: #0b0b0b; }
+.k-mid   { --fill: var(--c-mid);   --on: #0b0b0b; }
+.k-high  { --fill: var(--c-high);  --on: #ffffff; }
+.k-black { --fill: var(--c-black); --on: #ffffff; }
+.pill {
+  display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 650;
+  background: var(--fill); color: var(--on); white-space: nowrap;
+}
+
+/* today card */
+.today-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.today-date { font-size: 18px; font-weight: 650; }
+.today-ctl { display: flex; align-items: center; justify-content: center; gap: 22px; margin: 14px 0 6px; }
+.round {
+  width: 60px; height: 60px; border-radius: 50%; border: 0; font-size: 30px; line-height: 1;
+  background: var(--grid); color: var(--ink);
+}
+.round:disabled { opacity: .35; }
+.round.plus { background: var(--ink); color: var(--surface); }
+.round:active:not(:disabled) { transform: scale(.94); }
+.count { min-width: 88px; text-align: center; }
+.count span { display: block; font-size: 54px; font-weight: 700; line-height: 1; letter-spacing: -.02em; }
+.count small { font-size: 13px; color: var(--ink2); }
+.today .link { display: block; margin: 0 auto; }
+.hint { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; }
+.hint p { font-size: 14px; color: var(--ink2); }
+
+/* toolbar */
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+.seg { display: inline-flex; background: var(--grid); border-radius: 10px; padding: 2px; }
+.seg button {
+  border: 0; background: none; padding: 6px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--ink2);
+}
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1px var(--ring); }
+.nav { display: flex; align-items: center; gap: 4px; }
+.nav button.arrow {
+  width: 36px; height: 36px; border-radius: 10px; border: 0; background: var(--grid); font-size: 20px; line-height: 1;
+}
+.nav button.arrow:disabled { opacity: .35; }
+.nav-title { min-width: 96px; text-align: center; font-weight: 650; }
+
+/* calendar */
+.year { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px 14px; }
+@media (min-width: 640px) { .year { grid-template-columns: repeat(3, 1fr); } }
+.month h3 { font-size: 12px; letter-spacing: .05em; text-transform: uppercase; margin-bottom: 4px; }
+.month h3 button { border: 0; background: none; padding: 2px 0; font: inherit; letter-spacing: inherit; text-transform: inherit; font-weight: 700; }
+.dow, .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.dow span { font-size: 10px; font-weight: 600; text-align: center; color: var(--muted); padding-bottom: 2px; }
+.cell {
+  aspect-ratio: 1; border: 0; padding: 0; border-radius: 5px; position: relative;
+  background: var(--fill, var(--grid)); color: var(--on, var(--muted));
+  font-size: 0;
+}
+.cell.blank { background: none; pointer-events: none; }
+.cell.untracked { background: var(--grid); opacity: .7; }
+.cell.future { background: none; box-shadow: inset 0 0 0 1px var(--grid); }
+.cell.today { outline: 2px solid var(--ink); outline-offset: 1px; z-index: 1; }
+.cell:not(:disabled):active { filter: brightness(.9); }
+.month.big .dow span { font-size: 12px; padding-bottom: 6px; }
+.month.big .days { gap: 4px; }
+.month.big .cell { border-radius: 10px; aspect-ratio: 1 / .92; font-size: 15px; }
+.month.big .cell b { position: absolute; top: 4px; left: 7px; font-weight: 650; font-size: 13px; }
+.month.big .cell i { position: absolute; right: 7px; bottom: 4px; font-style: normal; font-weight: 700; font-size: 16px; }
+.month.big .cell.untracked b, .month.big .cell.future b { color: var(--muted); font-weight: 500; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--ink2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 12px; height: 12px; border-radius: 3px; background: var(--fill, var(--grid)); display: inline-block; }
+.legend i.none { background: none; box-shadow: inset 0 0 0 1px var(--axis); }
+
+/* stats */
+.filters { display: flex; }
+.filters .seg { width: 100%; }
+.filters .seg button { flex: 1; padding: 7px 4px; }
+.tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+@media (min-width: 640px) { .tiles { grid-template-columns: repeat(3, 1fr); } }
+.tile { background: var(--surface); border-radius: 14px; padding: 12px 14px; box-shadow: 0 0 0 1px var(--ring); }
+.tile .label { font-size: 13px; color: var(--ink2); }
+.tile .value { font-size: 30px; font-weight: 700; letter-spacing: -.02em; line-height: 1.15; }
+.tile .value small { font-size: 14px; font-weight: 600; color: var(--ink2); letter-spacing: 0; margin-left: 3px; }
+.tile .note { font-size: 12px; color: var(--muted); }
+.chart { margin-top: 10px; width: 100%; }
+.chart svg { display: block; overflow: visible; }
+svg .grid { stroke: var(--grid); stroke-width: 1; }
+svg .axis { stroke: var(--axis); stroke-width: 1; }
+svg .ax { fill: var(--muted); font-size: 11px; }
+svg .val { fill: var(--ink); font-size: 12px; font-weight: 650; }
+svg .goal { stroke: var(--ink2); stroke-width: 1; }
+svg .goalt { fill: var(--ink2); font-size: 11px; }
+svg .col .bar, svg .col .seg { transition: opacity .1s; }
+svg .col:hover .bar, svg .col:hover .seg, svg .col:focus .bar, svg .col:focus .seg { opacity: .78; }
+svg .col { outline: none; }
+.split { display: flex; gap: 2px; height: 28px; margin-top: 12px; }
+.split div {
+  border-radius: 4px; background: var(--fill); color: var(--on); font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; padding-left: 7px; overflow: hidden; white-space: nowrap;
+}
+.legend.mt { margin-top: 10px; }
+details { margin-top: 10px; }
+summary { font-size: 13px; color: var(--accent); font-weight: 600; cursor: pointer; }
+.tbl { max-height: 240px; overflow: auto; margin-top: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: left; padding: 5px 8px 5px 0; border-bottom: 1px solid var(--grid); font-variant-numeric: tabular-nums; }
+th { color: var(--ink2); font-weight: 600; position: sticky; top: 0; background: var(--surface); }
+.hist { list-style: none; margin: 8px 0 0; padding: 0; }
+.hist-row {
+  width: 100%; display: flex; align-items: center; gap: 10px; background: none; border: 0; border-bottom: 1px solid var(--grid);
+  padding: 9px 0; text-align: left;
+}
+.hist-row .d { width: 74px; flex: none; font-size: 14px; color: var(--ink2); }
+.hist-row .sw { width: 12px; height: 12px; border-radius: 3px; background: var(--fill); flex: none; }
+.hist-row .n { width: 78px; flex: none; font-weight: 650; font-size: 14px; }
+.hist-row .t { flex: 1; min-width: 0; color: var(--ink2); font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.empty { text-align: center; color: var(--ink2); padding: 28px 8px; }
+
+/* forms */
+.field { display: flex; flex-direction: column; gap: 4px; margin-top: 12px; font-size: 14px; color: var(--ink2); }
+.field input[type=text], .field input[type=date], .field input[type=number], textarea {
+  background: var(--bg); border: 1px solid var(--axis); border-radius: 10px; padding: 10px 12px; font-size: 16px; color: var(--ink); width: 100%;
+}
+.switch { display: flex; gap: 10px; align-items: center; margin-top: 14px; font-size: 15px; }
+.switch input { width: 22px; height: 22px; accent-color: var(--accent); flex: none; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.ghost, .primary {
+  border: 0; border-radius: 12px; padding: 11px 16px; font-weight: 650; font-size: 15px;
+}
+.ghost { background: var(--grid); color: var(--ink); }
+.primary { background: var(--ink); color: var(--surface); }
+.ghost.danger { color: var(--c-high); }
+.ghost:disabled { opacity: .4; }
+textarea { margin-top: 8px; resize: vertical; }
+
+/* tab bar */
+#tabs {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; justify-content: center;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  border-top: 1px solid var(--ring); padding-bottom: env(safe-area-inset-bottom);
+}
+#tabs div { display: flex; width: 100%; max-width: 760px; }
+#tabs button {
+  flex: 1; border: 0; background: none; padding: 8px 4px 7px; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  font-size: 11px; font-weight: 600; color: var(--muted);
+}
+#tabs button[aria-current="page"] { color: var(--ink); }
+#tabs svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* sheet */
+dialog#sheet {
+  border: 0; padding: 0; margin: auto auto 0; width: min(560px, 100%); max-width: 100%;
+  border-radius: 22px 22px 0 0; background: var(--surface); color: var(--ink);
+}
+dialog#sheet::backdrop { background: rgba(0, 0, 0, .42); }
+.sheet-body { padding: 10px 18px calc(18px + env(safe-area-inset-bottom)); }
+.grab { width: 38px; height: 4px; border-radius: 2px; background: var(--axis); margin: 0 auto 12px; }
+.sheet-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.sheet-head h2 { font-size: 18px; font-weight: 650; }
+.sheet-note { font-size: 13px; color: var(--ink2); margin-top: 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 8px 0 2px; }
+.chip { min-width: 42px; height: 40px; border-radius: 12px; border: 0; background: var(--grid); font-weight: 650; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+.sheet-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 18px; }
+.sheet-actions .primary { flex: 1; }
+
+/* tooltip */
+#tip {
+  position: fixed; left: 0; top: 0; z-index: 50; pointer-events: none; max-width: 240px;
+  background: var(--ink); color: var(--surface); border-radius: 10px; padding: 8px 10px; font-size: 13px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .25);
+}
+#tip[hidden] { display: none; }
+#tip .tt { opacity: .72; font-size: 12px; margin-bottom: 3px; }
+#tip .tr { display: flex; align-items: center; gap: 7px; line-height: 1.5; }
+#tip .tr i { width: 12px; height: 3px; border-radius: 2px; flex: none; }
+#tip .tr b { margin-left: auto; padding-left: 10px; font-weight: 700; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+</style>
+</head>
+<body>
+<main id="app"><div id="view"></div></main>
+
+<nav id="tabs" aria-label="Main">
+  <div>
+    <button data-tab="cal" aria-current="page">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>Calendar
+    </button>
+    <button data-tab="stats">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>Stats
+    </button>
+    <button data-tab="more">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/></svg>More
+    </button>
+  </div>
+</nav>
+
+<dialog id="sheet" aria-labelledby="sh-title"></dialog>
+<div id="tip" role="tooltip" hidden></div>
+
+<script>
+'use strict';
+(() => {
+  /* ---------- constants & helpers ---------- */
+  const KEY = 'drydays.v1';
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const MON3 = MONTHS.map(m => m.slice(0, 3));
+  const DOW3 = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const CATS = [
+    { id: 'dry',   name: 'No drinks' },
+    { id: 'low',   name: '1–2 drinks' },
+    { id: 'mid',   name: '3–5 drinks' },
+    { id: 'high',  name: '6+ drinks' },
+    { id: 'black', name: 'Blackout' },
+  ];
+  const CATNAME = Object.fromEntries(CATS.map(c => [c.id, c.name]));
+  const $ = (s, r = document) => r.querySelector(s);
+  const pad = n => String(n).padStart(2, '0');
+  const keyOf = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const fromKey = k => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d, 12); };
+  const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+  const mondayOf = d => addDays(d, -((d.getDay() + 6) % 7));
+  const todayKey = () => keyOf(new Date());
+  const isKey = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && keyOf(fromKey(s)) === s;
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const fmtLong = d => d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const fmtShort = d => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  const fmt1 = v => (Math.round(v * 10) / 10).toString();
+  const catOf = (n, b) => b ? 'black' : n <= 0 ? 'dry' : n <= 2 ? 'low' : n <= 5 ? 'mid' : 'high';
+  const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+
+  /* ---------- state & storage ---------- */
+  let storageOK = true;
+  try { localStorage.setItem('__t', '1'); localStorage.removeItem('__t'); } catch (e) { storageOK = false; }
+
+  function normalize(d) {
+    if (!d || typeof d !== 'object' || !d.entries || typeof d.entries !== 'object') throw new Error('This is not a Dry Days backup.');
+    const out = { v: 1, startDate: todayKey(), assumeDry: true, goal: 0, hintOff: false, entries: {} };
+    if (isKey(d.startDate)) out.startDate = d.startDate;
+    if (typeof d.assumeDry === 'boolean') out.assumeDry = d.assumeDry;
+    if (d.hintOff === true) out.hintOff = true;
+    const g = Math.round(Number(d.goal));
+    if (g >= 0 && g <= 999) out.goal = g;
+    for (const [k, v] of Object.entries(d.entries)) {
+      if (!isKey(k) || !v || typeof v !== 'object') continue;
+      const n = Math.round(Number(v.n));
+      if (!(n >= 0 && n <= 99)) continue;
+      const e = { n };
+      if (v.b === true) e.b = true;
+      if (typeof v.t === 'string' && v.t.trim()) e.t = v.t.trim().slice(0, 200);
+      out.entries[k] = e;
+    }
+    return out;
+  }
+  function freshState() { return { v: 1, startDate: todayKey(), assumeDry: true, goal: 0, hintOff: false, entries: {} }; }
+  let state;
+  try {
+    const raw = storageOK && localStorage.getItem(KEY);
+    state = raw ? normalize(JSON.parse(raw)) : freshState();
+  } catch (e) { state = freshState(); }
+  let _ts = null;
+  function save() {
+    _ts = null;
+    if (!storageOK) return;
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { storageOK = false; }
+  }
+  save();
+  if (navigator.storage && navigator.storage.persist) { try { navigator.storage.persist(); } catch (e) {} }
+
+  function trackStart() {
+    if (_ts) return _ts;
+    let s = state.startDate;
+    for (const k of Object.keys(state.entries)) if (k < s) s = k;
+    return (_ts = s);
+  }
+  function dayInfo(key) {
+    if (key > todayKey()) return null;
+    const e = state.entries[key];
+    if (e) return { key, n: e.n, blackout: !!e.b, note: e.t || '', cat: catOf(e.n, e.b), implied: false, exists: true };
+    if (state.assumeDry && key >= trackStart()) return { key, n: 0, blackout: false, note: '', cat: 'dry', implied: true, exists: false };
+    return null;
+  }
+  function changeDay(key, fn) {
+    const cur = state.entries[key] || { n: 0 };
+    const next = fn({ ...cur });
+    next.n = clamp(Math.round(Number(next.n) || 0), 0, 99);
+    if (next.b && next.n < 1) next.n = 1;
+    if (!next.b) delete next.b;
+    if (!next.t) delete next.t;
+    state.entries[key] = next;
+    save();
+  }
+
+  /* ---------- ui state ---------- */
+  const NOW = new Date();
+  let tab = 'cal', calMode = 'year', calYear = NOW.getFullYear(), calMonth = NOW.getMonth(), range = 'year';
+  let sheetKey = null, statsData = null;
+  const view = $('#view'), sheet = $('#sheet'), tipEl = $('#tip');
+
+  /* ---------- calendar ---------- */
+  function legendHTML() {
+    return '<div class="legend" aria-label="Legend">' +
+      CATS.map(c => `<span class="k-${c.id}"><i></i>${c.name}</span>`).join('') +
+      '<span><i class="none"></i>Not tracked</span></div>';
+  }
+  function todayCardHTML() {
+    const tk = todayKey();
+    const info = dayInfo(tk) || { n: 0, cat: 'dry', blackout: false };
+    return `<section class="card today" aria-label="Log today">
+      <div class="today-top">
+        <div><div class="eyebrow">Today</div><div class="today-date">${fmtLong(new Date())}</div></div>
+        <span class="pill k-${info.cat}">${CATNAME[info.cat]}</span>
+      </div>
+      <div class="today-ctl">
+        <button class="round" data-act="today-dec" aria-label="Remove one drink" ${info.n === 0 ? 'disabled' : ''}>−</button>
+        <div class="count" aria-live="polite"><span>${info.n}</span><small>${info.n === 1 ? 'drink' : 'drinks'}</small></div>
+        <button class="round plus" data-act="today-inc" aria-label="Add one drink">+</button>
+      </div>
+      <button class="link" data-act="open-day" data-key="${tk}">Details, note or blackout</button>
+    </section>`;
+  }
+  function hintHTML() {
+    if (state.hintOff || Object.keys(state.entries).length) return '';
+    return `<section class="card hint"><p><b>Tracking starts today.</b> Tap + for each drink. Days you don't log count as dry. Tap any day in the calendar to log it later, or change the start date under More.</p><button class="link" data-act="hint-off">Got it</button></section>`;
+  }
+  function monthHTML(y, m, big) {
+    const lead = (new Date(y, m, 1, 12).getDay() + 6) % 7;
+    const dim = new Date(y, m + 1, 0).getDate();
+    const tk = todayKey();
+    let cells = '';
+    for (let i = 0; i < lead; i++) cells += '<span class="cell blank"></span>';
+    for (let d = 1; d <= dim; d++) {
+      const key = `${y}-${pad(m + 1)}-${pad(d)}`;
+      const future = key > tk;
+      const info = future ? null : dayInfo(key);
+      const cls = future ? 'future' : info ? `k-${info.cat}` : 'untracked';
+      const label = `${d} ${MONTHS[m]} ${y}: ${future ? 'in the future' : info ? CATNAME[info.cat] + (info.n ? ', ' + plural(info.n, 'drink') : '') : 'not tracked'}`;
+      const inner = big ? `<b>${d}</b>${info && info.n > 0 ? `<i>${info.n}</i>` : ''}` : '';
+      cells += `<button class="cell ${cls}${key === tk ? ' today' : ''}" data-key="${key}" aria-label="${label}" ${future ? 'disabled' : ''}>${inner}</button>`;
+    }
+    const title = big ? '' : `<h3><button data-act="open-month" data-y="${y}" data-m="${m}">${MONTHS[m]}</button></h3>`;
+    return `<div class="month${big ? ' big' : ''}">${title}<div class="dow" aria-hidden="true">${'MTWTFSS'.split('').map(c => `<span>${c}</span>`).join('')}</div><div class="days">${cells}</div></div>`;
+  }
+  function renderCal() {
+    const t = new Date(), cy = t.getFullYear(), cm = t.getMonth();
+    const atEnd = calMode === 'year' ? calYear >= cy : (calYear > cy || (calYear === cy && calMonth >= cm));
+    const title = calMode === 'year' ? String(calYear) : `${MONTHS[calMonth]} ${calYear}`;
+    let body = '';
+    if (calMode === 'year') {
+      for (let m = 0; m < 12; m++) body += monthHTML(calYear, m, false);
+      body = `<div class="year">${body}</div>`;
+    } else {
+      body = monthHTML(calYear, calMonth, true);
+    }
+    view.innerHTML = todayCardHTML() + hintHTML() + `
+      <div class="toolbar">
+        <div class="seg" role="group" aria-label="Calendar view">
+          <button data-act="mode" data-mode="year" aria-pressed="${calMode === 'year'}">Year</button>
+          <button data-act="mode" data-mode="month" aria-pressed="${calMode === 'month'}">Month</button>
+        </div>
+        <div class="nav">
+          <button class="arrow" data-act="prev" aria-label="Previous">‹</button>
+          <span class="nav-title">${title}</span>
+          <button class="arrow" data-act="next" aria-label="Next" ${atEnd ? 'disabled' : ''}>›</button>
+        </div>
+      </div>
+      <section class="card" aria-label="Calendar">${body}</section>
+      ${legendHTML()}
+      ${storageOK ? '' : '<p class="sub">Storage is blocked in this browser, so your log will not be kept after you close the page.</p>'}`;
+  }
+
+  /* ---------- day sheet ---------- */
+  function renderSheet() {
+    const key = sheetKey, date = fromKey(key);
+    const info = dayInfo(key) || { n: 0, cat: 'dry', blackout: false, note: '', implied: false, exists: false };
+    const e = state.entries[key];
+    const n = e ? e.n : 0;
+    const chips = [0, 1, 2, 3, 4, 5, 6, 8, 10].map(v => `<button type="button" class="chip" data-act="sh-set" data-n="${v}" aria-pressed="${n === v}">${v}</button>`).join('');
+    let hint = '';
+    if (!e && info.implied) hint = 'Nothing logged, so this day counts as dry.';
+    else if (!e && key < trackStart()) hint = 'This day is before your tracking start date. Logging it adds it to your stats.';
+    else if (!e) hint = 'Nothing logged for this day yet.';
+    const tracked = !!dayInfo(key);
+    sheet.innerHTML = `<form method="dialog" class="sheet-body" onsubmit="return false">
+      <div class="grab"></div>
+      <div class="sheet-head"><h2 id="sh-title">${fmtLong(date)}</h2>${tracked ? `<span class="pill k-${info.cat}">${CATNAME[info.cat]}</span>` : '<span class="pill" style="--fill:var(--grid);--on:var(--ink2)">Not tracked</span>'}</div>
+      ${hint ? `<p class="sheet-note">${hint}</p>` : ''}
+      <div class="today-ctl">
+        <button type="button" class="round" data-act="sh-dec" aria-label="Remove one drink" ${n === 0 ? 'disabled' : ''}>−</button>
+        <div class="count" aria-live="polite"><span>${n}</span><small>${n === 1 ? 'drink' : 'drinks'}</small></div>
+        <button type="button" class="round plus" data-act="sh-inc" aria-label="Add one drink">+</button>
+      </div>
+      <div class="chips" role="group" aria-label="Set number of drinks">${chips}</div>
+      <label class="switch"><input type="checkbox" id="sh-black" ${e && e.b ? 'checked' : ''}><span>Blackout</span></label>
+      <label class="field"><span>Note</span><input type="text" id="sh-note" maxlength="200" placeholder="Optional" autocomplete="off"></label>
+      <div class="sheet-actions">
+        <button type="button" class="ghost danger" data-act="sh-clear" ${e ? '' : 'disabled'}>Clear entry</button>
+        <button type="button" class="primary" data-act="sh-done">Done</button>
+      </div>
+    </form>`;
+    $('#sh-note').value = e && e.t ? e.t : '';
+  }
+  function openDay(key) {
+    if (key > todayKey()) return;
+    sheetKey = key;
+    renderSheet();
+    if (!sheet.open) sheet.showModal();
+  }
+
+  /* ---------- stats ---------- */
+  function rangeDays(r) {
+    const end = new Date(); end.setHours(12, 0, 0, 0);
+    let start;
+    if (r === '30') start = addDays(end, -29);
+    else if (r === '90') start = addDays(end, -89);
+    else if (r === 'year') start = new Date(end.getFullYear(), 0, 1, 12);
+    else start = fromKey(trackStart());
+    const out = [];
+    for (let d = start; d <= end; d = addDays(d, 1)) {
+      const i = dayInfo(keyOf(d));
+      if (i) out.push({ ...i, date: new Date(d) });
+    }
+    return out;
+  }
+  function computeStats(days) {
+    const total = days.reduce((s, d) => s + d.n, 0);
+    const counts = { dry: 0, low: 0, mid: 0, high: 0, black: 0 };
+    days.forEach(d => counts[d.cat]++);
+    const dry = counts.dry, drinking = days.length - dry, heavy = counts.high + counts.black;
+    let longest = 0, run = 0, prev = null;
+    for (const d of days) {
+      if (d.cat === 'dry') {
+        run = prev && prev.cat === 'dry' && keyOf(addDays(prev.date, 1)) === d.key ? run + 1 : 1;
+        longest = Math.max(longest, run);
+      } else run = 0;
+      prev = d;
+    }
+    let current = 0;
+    if (days.length && days[days.length - 1].key === todayKey()) {
+      for (let i = days.length - 1; i >= 0 && days[i].cat === 'dry'; i--) current++;
+    }
+    // weekly
+    const wmap = new Map();
+    for (const d of days) {
+      const mk = keyOf(mondayOf(d.date));
+      let w = wmap.get(mk);
+      if (!w) { w = { monday: fromKey(mk), n: 0, drinking: 0, tracked: 0 }; wmap.set(mk, w); }
+      w.n += d.n; w.tracked++; if (d.cat !== 'dry') w.drinking++;
+    }
+    const weeks = [];
+    if (days.length) {
+      const last = mondayOf(days[days.length - 1].date);
+      for (let m = mondayOf(days[0].date); m <= last; m = addDays(m, 7)) {
+        weeks.push(wmap.get(keyOf(m)) || { monday: new Date(m), n: 0, drinking: 0, tracked: 0 });
+      }
+    }
+    // monthly
+    const mmap = new Map();
+    for (const d of days) {
+      const mk = `${d.date.getFullYear()}-${d.date.getMonth()}`;
+      let o = mmap.get(mk);
+      if (!o) { o = { y: d.date.getFullYear(), m: d.date.getMonth(), c: { dry: 0, low: 0, mid: 0, high: 0, black: 0 } }; mmap.set(mk, o); }
+      o.c[d.cat]++;
+    }
+    // weekday
+    const wd = Array.from({ length: 7 }, () => ({ n: 0, days: 0 }));
+    for (const d of days) { const i = (d.date.getDay() + 6) % 7; wd[i].n += d.n; wd[i].days++; }
+    return { days, total, counts, dry, drinking, heavy, longest, current, weeks: weeks.slice(-52), months: [...mmap.values()].slice(-24), wd };
+  }
+
+  function renderStats() {
+    const days = rangeDays(range);
+    const S = statsData = computeStats(days);
+    const ranges = [['30', '30 days'], ['90', '90 days'], ['year', 'This year'], ['all', 'All time']];
+    const filters = `<div class="filters"><div class="seg" role="group" aria-label="Period">${ranges.map(([k, l]) => `<button data-range="${k}" aria-pressed="${range === k}">${l}</button>`).join('')}</div></div>`;
+    if (!days.length) {
+      view.innerHTML = filters + '<div class="card empty">Nothing to show for this period yet. Log a day on the Calendar tab.</div>';
+      return;
+    }
+    const pct = v => Math.round(v / days.length * 100);
+    const tile = (label, value, unit, note) => `<div class="tile"><div class="label">${label}</div><div class="value">${value}${unit ? `<small>${unit}</small>` : ''}</div><div class="note">${note}</div></div>`;
+    view.innerHTML = filters + `
+      <div class="tiles">
+        ${tile('Dry days', S.dry, '', `${pct(S.dry)}% of ${plural(days.length, 'tracked day')}`)}
+        ${tile('Drinking days', S.drinking, '', `${S.heavy} heavy (6+ or blackout)`)}
+        ${tile('Total drinks', S.total, '', 'in this period')}
+        ${tile('Average per week', fmt1(S.total / days.length * 7), 'drinks', 'across tracked days')}
+        ${tile('Current dry streak', S.current, S.current === 1 ? 'day' : 'days', 'ending today')}
+        ${tile('Longest dry streak', S.longest, S.longest === 1 ? 'day' : 'days', 'in this period')}
+      </div>
+      <section class="card"><h2>Drinks per week</h2><p class="sub">Monday to Sunday${S.weeks.length >= 52 ? ', last 52 weeks' : ''}</p>
+        <div class="chart" id="ch-week"></div>
+        <details><summary>View as table</summary><div class="tbl" id="tb-week"></div></details></section>
+      <section class="card"><h2>Drinking days per month</h2><p class="sub">Days with at least one drink, by amount</p>
+        <div class="legend mt">${CATS.slice(1).map(c => `<span class="k-${c.id}"><i></i>${c.name}</span>`).join('')}</div>
+        <div class="chart" id="ch-month"></div>
+        <details><summary>View as table</summary><div class="tbl" id="tb-month"></div></details></section>
+      <section class="card"><h2>All tracked days</h2><p class="sub">Share of ${plural(days.length, 'day')} by amount</p>
+        <div class="split" id="ch-split"></div>
+        <div class="legend mt">${CATS.map(c => `<span class="k-${c.id}"><i></i>${c.name}</span>`).join('')}</div></section>
+      <section class="card"><h2>By weekday</h2><p class="sub">Average drinks per day</p>
+        <div class="chart" id="ch-dow"></div></section>
+      <section class="card"><h2>Recent drinking days</h2><ul class="hist" id="hist"></ul></section>`;
+    drawCharts();
+  }
+
+  /* ---------- charts (plain SVG) ---------- */
+  const NS = 'http://www.w3.org/2000/svg';
+  let tips = [];
+  const el = (tag, attrs, parent) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  };
+  const txt = (parent, s, attrs) => { const t = el('text', attrs, parent); t.textContent = s; return t; };
+  const addTip = t => { tips.push(t); return String(tips.length - 1); };
+  function niceScale(max, minStep = 1) {
+    if (max <= 0) return { max: 4 * minStep, step: minStep };
+    const raw = max / 4, mag = Math.pow(10, Math.floor(Math.log10(raw))), nrm = raw / mag;
+    const step = Math.max(minStep, (nrm <= 1 ? 1 : nrm <= 2 ? 2 : nrm <= 5 ? 5 : 10) * mag);
+    return { step, max: Math.ceil(max / step - 1e-9) * step };
+  }
+  function roundTop(x, y, w, h, r) {
+    r = Math.max(0, Math.min(r, h, w / 2));
+    return `M${x},${y + h}V${y + r}A${r},${r} 0 0 1 ${x + r},${y}H${x + w - r}A${r},${r} 0 0 1 ${x + w},${y + r}V${y + h}Z`;
+  }
+  function frame(host, o, maxVal) {
+    host.replaceChildren();
+    const W = Math.max(240, host.clientWidth || 320), H = o.h || 200;
+    const m = { l: 30, r: 8, t: 16, b: 24 };
+    const iw = W - m.l - m.r, ih = H - m.t - m.b;
+    const sc = niceScale(maxVal, o.minStep || 1);
+    const y = v => m.t + ih - (v / sc.max) * ih;
+    const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img', 'aria-label': o.aria }, host);
+    for (let i = 0; i * sc.step <= sc.max + 1e-9; i++) {
+      const v = i * sc.step;
+      el('line', { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: i === 0 ? 'axis' : 'grid' }, svg);
+      txt(svg, fmt1(v), { x: m.l - 6, y: y(v) + 4, class: 'ax', 'text-anchor': 'end' });
+    }
+    return { svg, W, H, m, iw, ih, sc, y };
+  }
+  function columnChart(host, o) {
+    const goal = o.goal || 0;
+    const mx = Math.max(0, ...o.items.map(i => i.value), goal);
+    const f = frame(host, o, mx), { svg, m, iw, ih, sc, y } = f;
+    const n = o.items.length, band = iw / n, bw = Math.max(2, Math.min(24, band - 2));
+    let lastX = -999;
+    o.items.forEach((it, i) => {
+      const cx = m.l + band * (i + .5);
+      const g = el('g', { class: 'col' }, svg);
+      const h = (it.value / sc.max) * ih;
+      if (h > 0) el('path', { d: roundTop(cx - bw / 2, y(it.value), bw, h, 4), class: 'bar', fill: 'var(--accent)' }, g);
+      el('rect', { x: m.l + band * i, y: m.t, width: band, height: ih + 20, fill: 'transparent', 'data-tip': addTip(it.tip), tabindex: o.focusable ? 0 : -1 }, g);
+      if (it.axis && cx - lastX >= (o.gap || 26)) { txt(svg, it.axis, { x: cx, y: f.H - 6, class: 'ax', 'text-anchor': 'middle' }); lastX = cx; }
+    });
+    if (goal > 0) {
+      el('line', { x1: m.l, x2: f.W - m.r, y1: y(goal), y2: y(goal), class: 'goal' }, svg);
+      txt(svg, `Limit ${goal}`, { x: f.W - m.r, y: y(goal) - 4, class: 'goalt', 'text-anchor': 'end' });
+    }
+    if (o.labelMax) {
+      let bi = -1, bv = 0;
+      o.items.forEach((it, i) => { if (it.value > bv) { bv = it.value; bi = i; } });
+      if (bi >= 0) txt(svg, fmt1(bv), { x: m.l + band * (bi + .5), y: y(bv) - 5, class: 'val', 'text-anchor': 'middle' });
+    }
+  }
+  function stackChart(host, o) {
+    const totals = o.items.map(i => i.parts.reduce((s, p) => s + p.v, 0));
+    const f = frame(host, o, Math.max(0, ...totals)), { svg, m, iw, ih, sc, y } = f;
+    const n = o.items.length, band = iw / n, bw = Math.max(2, Math.min(24, band - 2));
+    let lastX = -999;
+    o.items.forEach((it, i) => {
+      const cx = m.l + band * (i + .5), x = cx - bw / 2;
+      const g = el('g', { class: 'col' }, svg);
+      const segs = it.parts.filter(p => p.v > 0);
+      let acc = 0;
+      segs.forEach((p, k) => {
+        const top = y(acc + p.v), bot = y(acc), gap = k > 0 ? 2 : 0;
+        const h = Math.max(1, bot - top - gap);
+        const attrs = { class: 'seg', fill: `var(--c-${p.id})` };
+        if (k === segs.length - 1) el('path', { ...attrs, d: roundTop(x, top, bw, h, 4) }, g);
+        else el('rect', { ...attrs, x, y: top, width: bw, height: h }, g);
+        acc += p.v;
+      });
+      el('rect', { x: m.l + band * i, y: m.t, width: band, height: ih + 20, fill: 'transparent', 'data-tip': addTip(it.tip), tabindex: o.focusable ? 0 : -1 }, g);
+      if (cx - lastX >= 26) { txt(svg, it.axis, { x: cx, y: f.H - 6, class: 'ax', 'text-anchor': 'middle' }); lastX = cx; }
+    });
+  }
+  function splitBar(host, S) {
+    host.replaceChildren();
+    const W = host.clientWidth || 300;
+    CATS.forEach(c => {
+      const v = S.counts[c.id];
+      if (!v) return;
+      const d = document.createElement('div');
+      d.className = `k-${c.id}`;
+      d.style.flex = String(v);
+      d.style.background = 'var(--fill)';
+      const share = Math.round(v / S.days.length * 100);
+      if (W * v / S.days.length >= 44) d.textContent = share + '%';
+      d.dataset.tip = addTip({ title: c.name, rows: [{ key: `var(--c-${c.id})`, label: 'Days', value: String(v) }, { label: 'Share', value: share + '%' }] });
+      host.appendChild(d);
+    });
+  }
+  function tableHTML(head, rows) {
+    return `<table><thead><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+  }
+  function drawCharts() {
+    const S = statsData;
+    if (!S || tab !== 'stats' || !S.days.length) return;
+    tips = [];
+    // weekly
+    let prevMonth = -1;
+    columnChart($('#ch-week'), {
+      aria: 'Drinks per week', goal: state.goal,
+      items: S.weeks.map((w, i) => {
+        const mo = addDays(w.monday, 3).getMonth(); // month of the week's Thursday
+        const axis = (i === 0 || mo !== prevMonth) ? MON3[mo] : '';
+        prevMonth = mo;
+        return { value: w.n, axis, tip: { title: `Week of ${fmtShort(w.monday)}`, rows: [{ key: 'var(--accent)', label: 'Drinks', value: String(w.n) }, { label: 'Drinking days', value: String(w.drinking) }] } };
+      }),
+    });
+    $('#tb-week').innerHTML = tableHTML(['Week of', 'Drinks', 'Drinking days'], S.weeks.slice().reverse().map(w => [fmtShort(w.monday), w.n, w.drinking]));
+    // monthly
+    const order = ['low', 'mid', 'high', 'black'];
+    stackChart($('#ch-month'), {
+      aria: 'Drinking days per month by amount', focusable: true,
+      items: S.months.map(mo => ({
+        axis: MON3[mo.m],
+        parts: order.map(id => ({ id, v: mo.c[id] })),
+        tip: { title: `${MONTHS[mo.m]} ${mo.y}`, rows: [...order.map(id => ({ key: `var(--c-${id})`, label: CATNAME[id], value: String(mo.c[id]) })), { label: 'No drinks', value: String(mo.c.dry) }] },
+      })),
+    });
+    $('#tb-month').innerHTML = tableHTML(['Month', 'No drinks', '1–2', '3–5', '6+', 'Blackout'], S.months.slice().reverse().map(mo => [`${MON3[mo.m]} ${mo.y}`, mo.c.dry, mo.c.low, mo.c.mid, mo.c.high, mo.c.black]));
+    // split
+    splitBar($('#ch-split'), S);
+    // weekday
+    columnChart($('#ch-dow'), {
+      aria: 'Average drinks per weekday', labelMax: true, focusable: true, gap: 20, minStep: 0.1,
+      items: S.wd.map((w, i) => {
+        const avg = w.days ? w.n / w.days : 0;
+        return { value: avg, axis: DOW3[i], tip: { title: `${DOW3[i]} (${plural(w.days, 'day')})`, rows: [{ key: 'var(--accent)', label: 'Average', value: fmt1(avg) }, { label: 'Total drinks', value: String(w.n) }] } };
+      }),
+    });
+    // history
+    const ul = $('#hist');
+    const recent = S.days.filter(d => d.n > 0).slice(-12).reverse();
+    if (!recent.length) {
+      const li = document.createElement('li'); li.className = 'sub'; li.textContent = 'No drinking days in this period.'; ul.appendChild(li);
+    }
+    for (const d of recent) {
+      const li = document.createElement('li');
+      const b = document.createElement('button');
+      b.className = `hist-row k-${d.cat}`; b.dataset.act = 'open-day'; b.dataset.key = d.key;
+      const parts = [['d', fmtShort(d.date) + (d.date.getFullYear() !== new Date().getFullYear() ? ' ' + d.date.getFullYear() : '')], ['sw', ''], ['n', plural(d.n, 'drink') + (d.blackout ? ' ⚑' : '')], ['t', d.note]];
+      for (const [c, t] of parts) { const s = document.createElement('span'); s.className = c; s.textContent = t; b.appendChild(s); }
+      li.appendChild(b); ul.appendChild(li);
+    }
+  }
+
+  /* ---------- tooltip ---------- */
+  function showTip(idx, x, y) {
+    const t = tips[Number(idx)];
+    if (!t) return hideTip();
+    tipEl.replaceChildren();
+    const title = document.createElement('div'); title.className = 'tt'; title.textContent = t.title; tipEl.appendChild(title);
+    for (const r of t.rows) {
+      const row = document.createElement('div'); row.className = 'tr';
+      if (r.key) { const k = document.createElement('i'); k.style.background = r.key; row.appendChild(k); }
+      const l = document.createElement('span'); l.textContent = r.label;
+      const v = document.createElement('b'); v.textContent = r.value;
+      row.append(l, v); tipEl.appendChild(row);
+    }
+    tipEl.hidden = false;
+    const r = tipEl.getBoundingClientRect();
+    const left = clamp(x - r.width / 2, 8, window.innerWidth - r.width - 8);
+    let top = y - r.height - 14;
+    if (top < 8) top = y + 18;
+    tipEl.style.transform = `translate(${left}px,${top}px)`;
+  }
+  function hideTip() { tipEl.hidden = true; }
+  const tipTarget = e => e.target.closest && e.target.closest('[data-tip]');
+  document.addEventListener('pointermove', e => { const t = tipTarget(e); if (t && e.pointerType !== 'touch') showTip(t.dataset.tip, e.clientX, e.clientY); else if (e.pointerType !== 'touch') hideTip(); });
+  document.addEventListener('pointerdown', e => { const t = tipTarget(e); if (t) showTip(t.dataset.tip, e.clientX, e.clientY); else hideTip(); });
+  document.addEventListener('focusin', e => { const t = tipTarget(e); if (t) { const r = t.getBoundingClientRect(); showTip(t.dataset.tip, r.left + r.width / 2, r.top); } });
+  document.addEventListener('focusout', hideTip);
+  window.addEventListener('scroll', hideTip, { passive: true });
+
+  /* ---------- settings / backup ---------- */
+  function renderMore() {
+    view.innerHTML = `
+      <section class="card"><h2>Tracking</h2>
+        <label class="field"><span>Tracking since</span><input type="date" id="set-start" value="${state.startDate}" max="${todayKey()}"></label>
+        <label class="switch"><input type="checkbox" id="set-dry" ${state.assumeDry ? 'checked' : ''}><span>Count days without an entry as dry</span></label>
+        <label class="field"><span>Weekly limit in drinks (0 = off, shows a line on the weekly chart)</span><input type="number" id="set-goal" min="0" max="999" inputmode="numeric" value="${state.goal}"></label>
+      </section>
+      <section class="card"><h2>Backup</h2>
+        <p class="sub">Your log lives only on this device. Export a copy now and then, and use it to move to a new phone.</p>
+        <div class="row">
+          <button class="ghost" data-act="export">Export</button>
+          <button class="ghost" data-act="copy">Copy as text</button>
+          <button class="ghost" data-act="import-file">Import file</button>
+        </div>
+        <input type="file" id="imp-file" accept="application/json,.json" hidden>
+        <details><summary>Paste backup text</summary>
+          <textarea id="imp-text" rows="4" placeholder="Paste exported text here"></textarea>
+          <div class="row"><button class="ghost" data-act="import-text">Import pasted text</button></div>
+        </details>
+        <p class="sub" id="bk-msg" role="status" style="margin-top:10px"></p>
+      </section>
+      <section class="card"><h2>Add to iPhone home screen</h2>
+        <p class="sub">Open this page in Safari, tap the Share button, then Add to Home Screen. It then opens full screen like an app and works offline.</p></section>
+      <section class="card"><h2>Erase</h2>
+        <p class="sub">Deletes every logged day and resets settings on this device.</p>
+        <div class="row"><button class="ghost danger" data-act="erase">Erase all data</button></div></section>`;
+  }
+  const msg = s => { const m = $('#bk-msg'); if (m) m.textContent = s; };
+  const backupJSON = () => JSON.stringify({ app: 'dry-days', exported: new Date().toISOString(), ...state }, null, 1);
+  async function doExport() {
+    const name = `dry-days-${todayKey()}.json`;
+    const file = new File([backupJSON()], name, { type: 'application/json' });
+    try {
+      if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Dry Days backup' }); msg('Backup shared.'); return; }
+    } catch (e) { if (e && e.name === 'AbortError') return; }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(file); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    msg('Backup downloaded.');
+  }
+  async function doCopy() {
+    try { await navigator.clipboard.writeText(backupJSON()); msg('Backup copied to the clipboard.'); }
+    catch (e) { msg('Could not copy. Use Export instead.'); }
+  }
+  function doImport(text) {
+    try {
+      const next = normalize(JSON.parse(text));
+      const n = Object.keys(next.entries).length;
+      if (!confirm(`Replace your current log with this backup (${plural(n, 'logged day')})?`)) return;
+      state = next; save(); msg(`Imported ${plural(n, 'logged day')}.`);
+    } catch (e) { msg(e instanceof SyntaxError ? 'That text is not valid backup data.' : e.message); }
+  }
+
+  /* ---------- events ---------- */
+  function render() {
+    document.querySelectorAll('#tabs button').forEach(b => b.setAttribute('aria-current', b.dataset.tab === tab ? 'page' : 'false'));
+    if (tab === 'cal') renderCal(); else if (tab === 'stats') renderStats(); else renderMore();
+  }
+  function today(fn) { changeDay(todayKey(), fn); render(); }
+
+  document.addEventListener('click', e => {
+    const cell = e.target.closest('.cell[data-key]');
+    if (cell && !cell.disabled) return openDay(cell.dataset.key);
+    const tb = e.target.closest('[data-tab]');
+    if (tb) { tab = tb.dataset.tab; window.scrollTo(0, 0); return render(); }
+    const rb = e.target.closest('[data-range]');
+    if (rb) { range = rb.dataset.range; return render(); }
+    const b = e.target.closest('[data-act]');
+    if (!b) return;
+    const d = b.dataset;
+    switch (d.act) {
+      case 'today-inc': return today(x => ({ ...x, n: (x.n || 0) + 1 }));
+      case 'today-dec': return today(x => ({ ...x, n: Math.max(0, (x.n || 0) - 1) }));
+      case 'open-day': return openDay(d.key);
+      case 'hint-off': state.hintOff = true; save(); return render();
+      case 'mode': calMode = d.mode; return render();
+      case 'open-month': calYear = Number(d.y); calMonth = Number(d.m); calMode = 'month'; return render();
+      case 'prev': case 'next': {
+        const s = d.act === 'next' ? 1 : -1;
+        if (calMode === 'year') calYear += s;
+        else { calMonth += s; if (calMonth < 0) { calMonth = 11; calYear--; } if (calMonth > 11) { calMonth = 0; calYear++; } }
+        return render();
+      }
+      case 'sh-inc': changeDay(sheetKey, x => ({ ...x, n: (x.n || 0) + 1 })); renderSheet(); return render();
+      case 'sh-dec': changeDay(sheetKey, x => ({ ...x, n: Math.max(0, (x.n || 0) - 1) })); renderSheet(); return render();
+      case 'sh-set': changeDay(sheetKey, x => ({ ...x, n: Number(d.n) })); renderSheet(); return render();
+      case 'sh-clear': delete state.entries[sheetKey]; save(); renderSheet(); return render();
+      case 'sh-done': return sheet.close();
+      case 'export': return doExport();
+      case 'copy': return doCopy();
+      case 'import-file': return $('#imp-file').click();
+      case 'import-text': { const v = $('#imp-text').value.trim(); if (!v) return msg('Paste the backup text first.'); doImport(v); return render(); }
+      case 'erase':
+        if (confirm('Erase all logged days and settings on this device? This cannot be undone.')) { state = freshState(); save(); render(); }
+        return;
+    }
+  });
+  sheet.addEventListener('click', e => { if (e.target === sheet) sheet.close(); });
+  sheet.addEventListener('close', () => { sheetKey = null; });
+  sheet.addEventListener('change', e => {
+    if (e.target.id === 'sh-black') { changeDay(sheetKey, x => ({ ...x, b: e.target.checked })); renderSheet(); render(); }
+  });
+  sheet.addEventListener('input', e => {
+    if (e.target.id === 'sh-note') { changeDay(sheetKey, x => ({ ...x, t: e.target.value.trim() })); render(); }
+  });
+  document.addEventListener('change', e => {
+    const t = e.target;
+    if (t.id === 'set-start') { if (isKey(t.value)) { state.startDate = t.value > todayKey() ? todayKey() : t.value; save(); } }
+    else if (t.id === 'set-dry') { state.assumeDry = t.checked; save(); }
+    else if (t.id === 'set-goal') { const g = Math.round(Number(t.value)); state.goal = g >= 0 && g <= 999 ? g : 0; save(); }
+    else if (t.id === 'imp-file' && t.files && t.files[0]) {
+      const r = new FileReader();
+      r.onload = () => { doImport(String(r.result)); t.value = ''; render(); };
+      r.readAsText(t.files[0]);
+    }
+  });
+  let rz;
+  window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (tab === 'stats') drawCharts(); }, 150); });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && !sheet.open) render(); });
+
+  render();
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+  window.__dryDays = { get state() { return state; }, render };
+})();
+</script>
+</body>
+</html>
